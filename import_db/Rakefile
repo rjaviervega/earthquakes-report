@@ -1,0 +1,79 @@
+#
+# This rake task imports data from a CSV file to a MongoDB Database.
+#
+require 'open-uri'
+require 'rubygems'
+require 'csv'
+require 'date'
+require 'json'
+require './lib/importqk'
+
+# Config Vars
+FETCH_URL               = 'http://earthquake.usgs.gov/earthquakes/catalogs/eqs7day-M1.txt'
+TIMESTAMP_FILE_NAME     = 'last_timestamp.txt'
+JSON_RECORDS            = 'records.json'
+
+# Database Configuration 
+DB_BIN_PATH             = '/Users/javiervega/Downloads/mongodb-osx-x86_64-2.4.9/bin/'
+DB_IMPORT_EXE           =  DB_BIN_PATH << 'mongoimport'
+DB_NAME                 = 'testdb'
+DB_COLLECTION           = 'col1'
+DB_USER                 = '' # ' -u **** ' # SECRET USERNAME
+DB_PASS                 = '' # ' -p **** ' # SECRET PASSWORD
+DB_HOST                 = ' -h localhost '
+DB_PORT                 = ' --port 27017 '
+
+# Import Command to Database
+DB_IMPORT_CMD           = ' -d ' << DB_NAME << ' -c ' << DB_COLLECTION << ' --type json --jsonArray --file '
+IMPORT_CSV_RECORDS_CMD  = DB_IMPORT_EXE << ' ' << DB_IMPORT_CMD << JSON_RECORDS << ' --headerline' << DB_USER << DB_PASS << DB_HOST << DB_PORT
+
+##
+## IMPORT RECORDS SCRIPT 
+##
+
+task :default => 'earthquake:import'
+
+namespace :earthquake do
+  desc "Earthquakes Tasks"
+  
+  task :import do
+    lines = []
+    headerArray = []
+  	
+    #0. Import Class
+    import = ImportEarthQuakeData.new
+  	
+    #1. Fetch Data From URL
+    lines = import.openURL FETCH_URL
+  	
+    #2. Remove Comments Row
+    lines.slice!(1)
+    
+    # Update Headers
+    lines[0] = import.getUpdatedHeaders(lines[0])
+    
+    # Conver Headers to Array Splitting String by ','
+    headerArray = import.parseHeader(lines[0])
+  	
+    #3. Get Newest-Record TimeStamp
+    newestRecordTimeStamp = import.getNewestDateTimeRecord(lines)
+
+    #4. Get Last Record Imported Timestamp From File
+    lastRecordTimeStamp = import.getLastImportedRecord(TIMESTAMP_FILE_NAME)
+  	
+    #5.0 Process New Records From Last Timestamp to Proper Array JSON Formatted Objects
+    jsonHash = import.processRecords(lines, headerArray, lastRecordTimeStamp)
+    
+    #6. Save Last Inserted TimeStamp
+    File.open(TIMESTAMP_FILE_NAME, 'w') {|f| f.write(newestRecordTimeStamp) }
+	
+    #7. Write CSV Value to Be Imported with Chosen Database
+    File.open(JSON_RECORDS, 'w') {|f| f.write(jsonHash.to_json) }
+
+    #8. Import CSV to Database
+    system IMPORT_CSV_RECORDS_CMD
+  
+    #9. Clean up CSV File
+    File.delete(JSON_RECORDS)    
+  end
+end

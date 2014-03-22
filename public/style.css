@@ -1,0 +1,14 @@
+body 
+{ 
+    padding-top: 60px;
+}
+#map-canvas 
+{ 
+    height: 500px; 
+    width: 100%; 
+    border: 1px solid gray; 
+}
+#map-canvas img 
+{ 
+    max-width: none; 
+}

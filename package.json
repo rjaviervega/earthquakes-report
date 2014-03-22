@@ -1,0 +1,29 @@
+{
+  "dependencies": {
+    "express": "3.x",
+    "mongodb": "*"
+  },
+  "description": "EarthQuake DB Interface API",
+  "devDependencies": {
+    "grunt": "^0.4.4",
+    "grunt-contrib-jshint": "~0.6.3",
+    "grunt-contrib-nodeunit": "~0.2.0",
+    "grunt-contrib-uglify": "~0.2.2",
+    "grunt-contrib-less": "^0.11.0",
+    "nodeunit": "0.8.x"
+  },
+  "engines": {
+    "node": "0.10.x"
+  },
+  "name": "earthquake-api",
+  "private": true,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rjaviervega/earthquakes-report.git"
+  },
+  "version": "0.0.1",
+  "scripts": {
+    "test": "nodeunit ./test/earthquakes_test.js",
+    "testruby": "cd ./import_db/test && ruby importqk_test.rb"
+  }
+}
